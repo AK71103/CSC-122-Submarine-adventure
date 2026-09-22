@@ -20,6 +20,25 @@ On the player's turn, they may type in W, A, S, or D, to move Up, Left, Down, or
 
 The player can move freely through open ocean, but cannot move against a wall, or against the borders of the level. If the player makes an invalid move, you should display a message explaining why the move didn't work, and let them try again, without wasting their turn (no oxygen should be lost)
 
+Ex)
+
+```
+ @  
+    #
+#####﻿
+ 
+Enter a move: S
+     
+     
+  @ #
+#####﻿
+ 
+ 
+Enter a move: S
+You can't move into a wall! Try again!
+Enter a move:
+```
+
 ## The Level and the Camera
 
 
@@ -29,11 +48,43 @@ The entire level should not be visible at once. On each turn, you should display
 
 (Note that in the example, I'm representing open ocean with a blank tile.)
 
+Ex)
+```
+  @  
+##  #
+#####
+ 
+Enter a move: D
+﻿﻿
+     
+     
+  @  
+#  ##
+#####﻿
+```
 ## The Surface and Oxygen
 
 
 The player should begin the adventure at some designated spot on the surface. They will start with some amount of oxygen, and their current oxygen should be displayed every turn. Every turn will spend oxygen. If the player runs out of oxygen, they lose and the game should return to a main menu that allows them to start over. If the player ever returns to the surface (at any location), their oxygen is refilled.
 
+Ex)
+```
+~~@~~
+    #
+   ##
+ 
+Oxygen: 50/50
+ 
+Enter a move: S
+   
+     
+~~~~~
+  @ #
+   ##
+  ###
+ 
+Oxygen: 49/50
+```
 ## Finding Treasure:
 
 
@@ -52,7 +103,44 @@ Your game should have several different pieces of treasure, and at least a few i
 
 
 When the player returns to the surface, the value of all pieces of treasure found on that descent are added to their total earnings, which is displayed.
-
+Ex)
+```
+  ###
+   ##
+  @ #
+  * #
+#####
+ 
+Oxygen: 32/50
+ 
+Enter a move: inspect
+ 
+You found a gold coin! (Value: $5)
+ 
+Enter a move:
+ 
+...
+ 
+     
+     
+~~@~~
+    #
+   ##
+ 
+You reached the surface!
+Oxygen refilled.
+Treasure collected:
+Gold coin: +$5
+Bronze Sword: +$80
+Earnings this descent: +$85
+ 
+Total Earnings: $105
+ 
+Oxygen: 50/50
+ 
+Enter a move:
+﻿
+```
 ## Other:
 
 
