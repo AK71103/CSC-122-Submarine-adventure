@@ -150,4 +150,94 @@ When you launch the game or die, you are shown a main menu which allows you to s
 
 Input should be validated at every step of the game! Invalid input should not spend the player's turn.
 
+# Portfolio 2
+
+## New Areas:
+Now, it's time to go deeper. Hidden in the seafloor are paths, leading to caves, ruins, or something else that's interesting to explore. You need to design a second area for your game, which can be accessed by traveling through gaps at the bottom or edges of your existing area. Each area should be a separate object in your code - if you try to have an entire large world exist at once, it will strain your computer's memory and cause performance issues!
+
+```
+111
+11@
+111
+ 
+Enter a move: D
+ 
+222
+@22
+222
+```
+
+Entering an area does not collect treasure, restore oxygen, or anything. It is a continuation of the in progress descent. You're not done until you return to the surface back in area 1!
+
+Make sure your new area is still populated with treasures and stuff to find!
+
+## Bubbles
+Going so deep can make your sub run out of oxygen, leaving you in a watery grave. Luckily, scattered throughout the depths are safe areas with additional oxygen.
+
+Touching an oxygen bubble should restore your sub's oxygen, but not collect your treasure. You still have to make it back to the surface for that ;)
+
+Oxygen bubbles are permanent, once the sub leaves the square, the bubble should still be visible.
+
+```
+    OO 
+   @OOO
+       
+Oxygen: 50/100
+Enter a move: D
+ 
+     OO 
+    @OO
+ 
+Oxygen: 100/100
+Enter a move: A
+ 
+     OO 
+   @OOO
+```
+Part of this portfolio is making a game that plays reasonably well. Make sure there's enough oxygen available for the sub to explore everything. Not necessarily on one trip though.
+## Levers and Doors
+
+Within the ocean, you may find ruins of an ancient civilization, still locked behind ancient mechanisms. There's probably good treasure in there!
+
+Your sub may come across closed doors. While closed, the doors act as solid blocks.
+
+Every door has an index number, corresponding to a lever.
+
+When the sub uses "inspect" near a door, it will tell them what index the door has.
+
+When the sub uses "inspect" near a lever, all doors with a matching index will be opened. Opened doors are treated like empty water.
+
+Using the lever again will close the doors.
+
+```
+#####
+    |
+ @  |
+ \  |
+#####
+ 
+Enter a move: inspect
+ 
+Lever 4 used! Corrsponding doors have opened
+ 
+#####
+    
+ @  
+ /  
+#####
+﻿
+Enter a move: inspect
+ 
+Lever 4 used! Corrsponding doors have closed
+ 
+#####
+    |
+ @  |
+ \  |
+#####
+
+```
+
+
+
 
