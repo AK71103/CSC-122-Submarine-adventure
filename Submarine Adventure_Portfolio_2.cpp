@@ -6,8 +6,8 @@
 #include <cstdlib>
 #include <ctime>
 #include <algorithm>
-
-
+#include <limits>
+#include <vector>
 //Grid Constants
 const int GridSize = 10; //grid size 10x10
 const char EmpCell = '.'; // Empty cells
@@ -49,6 +49,7 @@ struct Unknown{//struct to hold mystery item information
 struct Door { //struct to hold locked and Unlocked Door 
     int x;
     int y;
+    int SubAreaID;
     char type;
     bool isLckd; // is door locked?
     bool Entered; // Have you gone through this door?
@@ -256,6 +257,14 @@ void UnlckDoors(){ //Unlocks the doors to the Sub areas
     }
 }
 
+void LckDoors(){//locks the doors to the sub areas
+    for (int i = 0; i < DoorCnt; i++) {
+        doors[i].isLckd = true;
+        doors[i].type = LckdDoor;
+        
+    }
+}
+
 void Inspect(const SubCoord& CurPos, int& SubOxy) {//Inspect items
     bool foundUnknown = false;
     bool foundBubble = false;
@@ -301,6 +310,7 @@ void Inspect(const SubCoord& CurPos, int& SubOxy) {//Inspect items
             std::cout << "No unknown items nearby.\n";
         }
     for (int i = 0; i < LvrCnt; i++) { //Lever Check
+            //use Lever to Unlock the doors
             if (std::abs(lever[i].x - CurPos.getX()) <= 1 &&
                 std::abs(lever[i].y - CurPos.getY()) <= 1 &&
                 !lever[i].LvrUsd) {
@@ -312,7 +322,20 @@ void Inspect(const SubCoord& CurPos, int& SubOxy) {//Inspect items
                 UnlckDoors();
             break;
             }
-        }
+        
+         //Use Lever to lock the doors
+         if (std::abs(lever[i].x - CurPos.getX()) <= 1 &&
+                std::abs(lever[i].y - CurPos.getY()) <= 1 &&
+                lever[i].LvrUsd) {
+                foundLever = true;
+                lever[i].LvrUsd = false;
+
+                std::cout << "Lever Deactivated! Doors locked.\n";
+
+                LckDoors();
+            break;
+            }
+    }
         if (!foundLever) {
             std::cout << "No Levers nearby.\n";
         }
@@ -344,6 +367,9 @@ void moveControls(SubCoord& CurPos, int& SubOxy) {
 
     std::cout << "Enter your move (W/A/S/D) or inspect (I): ";
     std::cin >> move;
+    std::cin.ignore(
+        std::numeric_limits<std::streamsize>::max(), '\n'
+    );
 
     switch (move) {
         case 'W':
@@ -374,6 +400,7 @@ void moveControls(SubCoord& CurPos, int& SubOxy) {
                 SubOxy=0;
             }
             return;
+        //error message for enter a string instead of 1 character.
 
         default:
             std::cout << "Invalid move. Please enter W, A, S, D, or I.\n";
@@ -479,18 +506,10 @@ void SpawnDoor(){ //function to spawn Locked doors and opened pathways
 
         doors[i].x = x;
         doors[i].y = y;
+        doors[i].SubAreaID = i;
         doors[i].type = LckdDoor;
         doors[i].isLckd = true;
         doors[i].Entered = false;
-    }
-}
-
-void SpawnPthway(){
-    for (int i = 0; i < DoorCnt; i++) {
-        pathways[i].x = doors[i].x;
-        pathways[i].y = doors[i].y;
-        pathways[i].type = LckdDoor;
-
     }
 }
 
@@ -618,6 +637,7 @@ class SubArea{ //abstract class for the subareas
     virtual void Enter() = 0;
     virtual void Subgrid() = 0;
     virtual void SpawnSubArea() = 0;
+    virtual void SpawnSubTrea() = 0;
     int getSubAreaX() const {
         return SubAreaX;
     }
@@ -660,6 +680,15 @@ class Cave : public SubArea { // cave subarea
             }
         }
     }
+    void SpawnSubTrea() override {//spawn 6 treasures (3 shells, 2 pearls, 1 gem)
+    
+        int SubX, SubY;
+
+        SubX = rand() % SubAreaX;
+        SubY = rand() % SubAreaY;
+
+        grid[SubY][SubX] = 'T';
+    }
 };
 
 class Ruins : public SubArea { // cave subarea
@@ -693,6 +722,14 @@ class Ruins : public SubArea { // cave subarea
                 }
             }
         }
+    void SpawnSubTrea() override{//spawn 8 treasures (5 gems and 3 Treasure Chests)
+        int SubX, SubY;
+
+        SubX = rand() % SubAreaX;
+        SubY = rand() % SubAreaY;
+
+        grid[SubY][SubX] = 'T';     
+    }
 };
 
 class Shipwreck : public SubArea { // cave subarea
@@ -724,6 +761,14 @@ class Shipwreck : public SubArea { // cave subarea
                 }
             }
         }
+    void SpawnSubTrea() override{ //spawn 5 treasures (4 Doubloons, 1 Treasure chest)
+        int SubX, SubY;
+
+        SubX = rand() % SubAreaX;
+        SubY = rand() % SubAreaY;
+
+        grid[SubY][SubX] = 'T';
+    }
 };
 
 //SubArea objects
@@ -731,31 +776,36 @@ Cave cave;
 Ruins ruins;
 Shipwreck shipwreck;
 
-void EnterSubArea(const SubCoord& CurPos){//function to access Subareas
-     for (int i = 0; i < DoorCnt; i++) {
+std::vector<SubArea*> subAreas = {
+    &cave,
+    &ruins,
+    &shipwreck
+    };
 
+void EnterSubArea(const SubCoord& CurPos){//function to access Subareas
+    for (int i = 0; i < DoorCnt; i++) {
+
+        // Check whether submarine is on an unlocked door
         if (doors[i].x == CurPos.getX() &&
             doors[i].y == CurPos.getY() &&
-            !doors[i].isLckd && !doors[i].Entered) {
+            !doors[i].isLckd &&
+            !doors[i].Entered) {
 
-            doors[i].Entered = true;
+            int SubID = doors[i].SubAreaID;
 
-            if (doors[i].y >= 8) {
-                ruins.Enter();
-                ruins.Subgrid();
-            }
-            else if (doors[i].x <= 5) {
-                cave.Enter();
-                cave.Subgrid();
-            }
-            else {
-                shipwreck.Enter();
-                shipwreck.Subgrid();
+            if (SubID >= 0 &&
+                SubID < static_cast<int>(subAreas.size())) {
+
+                doors[i].Entered = true;
+
+                subAreas[SubID]->Enter();
+                subAreas[SubID]->SpawnSubArea();
+                subAreas[SubID]->SpawnSubTrea();
+                subAreas[SubID]->Subgrid();
             }
 
             return;
         }
-    
     }
 }
 
@@ -780,6 +830,7 @@ bool PlayAgain() {
     std::cout << "Thanks for playing!\n";
     return false;
 }
+
 int main() {
     std::cout << "Welcome to Deep Dive!" << std::endl;
     srand(static_cast<unsigned int>(time(0))); // Seed the random number generator
@@ -792,11 +843,7 @@ int main() {
         for (int i = 0; i < 3; i++) {//Reset Unknowns
             UnknwnInspt[i] = 0;
         }
-        for (int i = 0; i < DoorCnt; i++){//Reset doors
-            doors[i].Entered = false;
-            doors[i].isLckd = true;
-            doors[i].type = LckdDoor;
-        }
+        LckDoors();
         for (int i = 0; i < LvrCnt; i++){//Reset Lever
             lever[i].LvrUsd = false;
         }
@@ -806,7 +853,6 @@ int main() {
         spawnTrea(); // Spawn random treasure across the grid at the start of the game
         spawnUnknwn(); // Spawn random unknown items across the grid at the start of the game
         SpawnDoor(); // Spawn 3 random doors across the grid
-        SpawnPthway();// replaces doors with pathways
         SpawnLvr();// Spawns a Lever at a random point on the grid
         SpawnAirBble();// Spawns Air bubbles randomly across the grid
         //intiailized New Run stats
@@ -836,6 +882,8 @@ int main() {
         //move controls
         moveControls(CurPos,SubOxy);
         
+        CllctTrea(CurPos); //check for treasure collection
+
         if (CurPos.getY() == 0) { // Check whether the player reached the surface
             break;
         }
@@ -843,7 +891,6 @@ int main() {
         if (SubOxy <= 0) {  // Check oxygen
             break;
         }
-        CllctTrea(CurPos); //check for treasure collection
         
         DisplayCam(CurPos); //update camera after move
         
@@ -869,7 +916,9 @@ int main() {
 
             std::cout << "You have earned: " << RunEarn
                     << " gold coins this run!\n";
-
+            
+            std::cout << "Total Earnings: " << TotEarn << " gold coins\n";
+            
             PlyAgain = PlayAgain();
         }
         else if (SubOxy <= 0) {
@@ -879,7 +928,7 @@ int main() {
 
             std::cout << "You have earned: " << RunEarn
                     << " gold coins this run!\n";
-
+            std::cout << "Total Earnings: " << TotEarn << " gold coins\n";
             PlyAgain = PlayAgain();
         }
     }
